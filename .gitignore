@@ -1,0 +1,6 @@
+/.env*
+!/.env.dist
+/.opencode
+/.vscode/
+/compose.override.yaml
+/compose.override.yml

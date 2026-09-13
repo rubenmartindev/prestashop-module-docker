@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+
+require_once '/var/www/html/config/config.inc.php';
+
+$moduleName = getenv('MODULE_NAME');
+
+$module = Module::getInstanceByName($moduleName);
+
+if (!$module) {
+    fwrite(STDERR, "The \033[32m{$moduleName}\033[0m module cannot be found.\n");
+    exit(1);
+}
+
+if (Module::isInstalled($moduleName)) {
+    fwrite(STDOUT, "The \033[32m{$moduleName}\033[0m module is already installed.\n");
+    exit(0);
+}
+
+Module::updateTranslationsAfterInstall(false);
+
+$context = Context::getContext();
+
+if (!isset($context->employee) || !Validate::isLoadedObject($context->employee)) {
+    $context->employee = new Employee(1);
+}
+
+if (!$module->install()) {
+    fwrite(STDERR, "Unable to install \033[32m{$moduleName}\033[0m module.\n");
+    exit(1);
+}
+
+fwrite(STDOUT, "Module \033[32m{$moduleName}\033[0m installed.\n");

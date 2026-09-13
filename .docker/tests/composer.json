@@ -1,0 +1,19 @@
+{
+    "name": "rubenmartindev/prestashop-docker-module",
+    "description": "Testing tooling.",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ruben Martín",
+            "email": "hola@rubenmartin.dev"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "*"
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}

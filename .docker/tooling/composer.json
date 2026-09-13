@@ -1,0 +1,28 @@
+{
+    "name": "rubenmartindev/prestashop-docker-module",
+    "description": "Development and static analysis tooling.",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ruben Martín",
+            "email": "hola@rubenmartin.dev"
+        }
+    ],
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpcompatibility/php-compatibility": "^9.3",
+        "phpstan/phpstan": "^2.2",
+        "prestashop/autoindex": "^3.0",
+        "prestashop/header-stamp": "^3.1",
+        "prestashop/php-dev-tools": "^5.0",
+        "squizlabs/php_codesniffer": "^3.13"
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
