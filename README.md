@@ -96,18 +96,18 @@ Password: prestashop
 `-- Makefile       Main development interface
 ```
 
-For example, `PS_VERSION_TAG=1.6` stores the generated shop files in
+For example, `PS=1.6` stores the generated shop files in
 `prestashop/1.6/`. These files persist when the containers are stopped and are
 excluded from Git.
 
 ## Working with Multiple PrestaShop Versions
 
-The Docker Compose project name is generated from `MODULE_NAME` and
-`PS_VERSION_TAG`. Dots in the version tag are replaced with hyphens:
+The Docker Compose project name is generated from `MODULE_NAME` and `PS`. Dots
+in the version tag are replaced with hyphens:
 
 ```text
 MODULE_NAME=foobar
-PS_VERSION_TAG=8.1
+PS=8.1
 
 Project name: foobar-8-1
 ```
@@ -115,9 +115,9 @@ Project name: foobar-8-1
 You can select a version in `.env` or pass it directly to Make:
 
 ```bash
-make PS_VERSION_TAG=1.6 MODULE_NAME=mymodule up
-make PS_VERSION_TAG=8.1 MODULE_NAME=mymodule up
-make PS_VERSION_TAG=9 MODULE_NAME=mymodule up
+make PS=1.6 MODULE_NAME=mymodule up
+make PS=8.1 MODULE_NAME=mymodule up
+make PS=9 MODULE_NAME=mymodule up
 ```
 
 Each command uses a different project, PrestaShop directory, database volume,
@@ -127,15 +127,15 @@ To run multiple versions at the same time, assign unique host ports to each
 one. `PS_DOMAIN` must match the selected PrestaShop port:
 
 ```bash
-make PS_VERSION_TAG=8.1 PS_HTTP_PORT=8081 PS_DOMAIN=localhost:8081 ADMINER_PORT=9081 up
-make PS_VERSION_TAG=9 PS_HTTP_PORT=8082 PS_DOMAIN=localhost:8082 ADMINER_PORT=9082 up
+make PS=8.1 PS_HTTP_PORT=8081 PS_DOMAIN=localhost:8081 ADMINER_PORT=9081 up
+make PS=9 PS_HTTP_PORT=8082 PS_DOMAIN=localhost:8082 ADMINER_PORT=9082 up
 ```
 
 Use the same version variables when running commands or stopping a specific
 environment:
 
 ```bash
-make PS_VERSION_TAG=8.1 down
+make PS=8.1 down
 ```
 
 ## Environment Configuration
@@ -143,13 +143,13 @@ make PS_VERSION_TAG=8.1 down
 The Makefile loads optional environment files in this order:
 
 1. `.env`
-2. `.env.<PS_VERSION_TAG>`
-3. `.env.<PS_VERSION_TAG>.local`
+2. `.env.<PS>`
+3. `.env.<PS>.local`
 
 Values in later files override values from earlier files. Variables passed on
 the `make` command line have the highest priority.
 
-For example, when `PS_VERSION_TAG=8.1`, the following files are loaded:
+For example, when `PS=8.1`, the following files are loaded:
 
 ```text
 .env
@@ -207,9 +207,9 @@ ADMINER_PORT=9090
 Select the configuration by passing its PrestaShop tag to Make:
 
 ```bash
-make PS_VERSION_TAG=1.6 up
-make PS_VERSION_TAG=8.1 up
-make PS_VERSION_TAG=9 up
+make PS=1.6 up
+make PS=8.1 up
+make PS=9 up
 ```
 
 The three environments use the shared settings from `.env` and their own
@@ -225,7 +225,7 @@ selects the correct Compose profile and project name.
 | Variable | Default | Description |
 | --- | --- | --- |
 | `MODULE_NAME` | Required | PrestaShop technical module name and project-name prefix |
-| `PS_VERSION_TAG` | `9` | Official PrestaShop Docker image tag and installation directory |
+| `PS` | `9` | Official PrestaShop Docker image tag and installation directory |
 | `PS_HTTP_PORT` | `80` | Host port for PrestaShop |
 | `PS_DOMAIN` | `localhost:80` in `.env.dist` | Domain and port configured in PrestaShop |
 | `PS_FOLDER_ADMIN` | `admin-dev` | Back-office directory name |
@@ -251,9 +251,9 @@ it. Change both values together when using a non-default port.
 
 ### `prestashop`
 
-Builds on the official PrestaShop image selected by `PS_VERSION_TAG`. The
-generated installation is mounted from `prestashop/<PS_VERSION_TAG>/`, while
-the local `module/` directory is mounted at
+Builds on the official PrestaShop image selected by `PS`. The generated
+installation is mounted from `prestashop/<PS>/`, while the local `module/`
+directory is mounted at
 `/var/www/html/modules/<MODULE_NAME>`.
 
 Composer and Xdebug are installed in this image. Xdebug uses port `9003`, modes
@@ -298,8 +298,9 @@ required by every target.
 | Command | Description |
 | --- | --- |
 | `make build` | Build the PrestaShop image and pull newer base images |
-| `make up` | Create the version directory and start PrestaShop, MySQL, and Adminer |
+| `make up` | Create the version directory, start the services, and print their URLs |
 | `make down` | Stop and remove the environment containers |
+| `make down-hard` | Stop the environment and delete its containers, volumes, and generated PrestaShop installation |
 | `make logs` | Follow container logs |
 | `make ps` | Show the environment status |
 | `make shell` | Open Bash as `www-data` in the mounted module directory |
@@ -363,7 +364,7 @@ The tooling and test services mount the generated PrestaShop directory. Run
 
 `make down` removes the containers but preserves development data:
 
-- The generated shop remains in `prestashop/<PS_VERSION_TAG>/`.
+- The generated shop remains in `prestashop/<PS>/`.
 - MySQL data remains in the project's `db_database` named volume.
 - PHPStan's cache remains in the project's `tooling_phpstan_cache` named
   volume.
@@ -371,6 +372,10 @@ The tooling and test services mount the generated PrestaShop directory. Run
 
 Because each project name contains the module name and PrestaShop version,
 these volumes are isolated between version environments.
+
+`make down-hard` also removes the project's named volumes and the generated
+`prestashop/<PS>/` directory, resetting that PrestaShop environment completely.
+The module source in `module/` is not removed.
 
 ## License
 

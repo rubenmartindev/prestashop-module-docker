@@ -1,10 +1,14 @@
-RED   	:= $(shell printf '\033[31m')
-YELLOW	:= $(shell printf '\033[33m')
-RESET	:= $(shell printf '\033[0m')
+RED   			:= $(shell printf '\e[0;31m')
+BLUE			:= $(shell printf '\e[0;33m')
+YELLOW			:= $(shell printf '\e[0;33m')
+CYAN_UNDERLINE	:= $(shell printf '\e[4;36m')
+
+RESET			:= $(shell printf '\e[0m')
 
 -include .env
 
-PS_VERSION_TAG ?= 9
+PS				?= 9
+PS_VERSION_TAG	:= $(PS)
 
 -include .env.$(PS_VERSION_TAG)
 -include .env.$(PS_VERSION_TAG).local
@@ -33,7 +37,7 @@ TOOLING_COMPOSE			:= $(COMPOSE) --profile=tooling
 .DEFAULT_GOAL 			:= help
 .PHONY: \
 	help \
-	build up down logs ps shell console \
+	build up down down-hard logs ps shell console \
 	phpstan phpcs cs-check tests qa autoindex header-stamp \
 	composer install uninstall
 
@@ -50,16 +54,31 @@ build: ## Build the PrestaShop image
 		$(ARGS)
 
 up: ## Start the PrestaShop container
-	@mkdir -p prestashop/$(PS_VERSION_TAG)
+	@mkdir -p "./prestashop/$(PS_VERSION_TAG)"
 	@$(PRESTASHOP_COMPOSE) up \
 		--wait \
 		--detach \
 		$(ARGS)
+	@echo ""
+	@echo "Services URLs:"
+	@echo " - $(YELLOW)PrestaShop (Frontend):$(RESET) $(CYAN_UNDERLINE)http://$(PS_DOMAIN)$(RESET)"
+	@echo " - $(YELLOW)PrestaShop (Backend):$(RESET)  $(CYAN_UNDERLINE)http://$(PS_DOMAIN)/$(PS_FOLDER_ADMIN)$(RESET)"
+	@echo " - $(YELLOW)Adminer:$(RESET)               $(CYAN_UNDERLINE)http://localhost:$(ADMINER_PORT)$(RESET)"
 
 down: ## Stop and remove the PrestaShop container
 	@$(PRESTASHOP_COMPOSE) down \
 		--remove-orphans \
 		$(ARGS)
+
+down-hard: ## Stop and delete containers, volumes and the installation of PrestaShop
+	@$(PRESTASHOP_COMPOSE) down \
+		--remove-orphans \
+		--volumes \
+		$(ARGS)
+	@if [ -d "./prestashop/$(PS_VERSION_TAG)" ]; then \
+		rm -rf "./prestashop/$(PS_VERSION_TAG)"; \
+		echo " ✔ Folder deleted: prestashop/$(PS_VERSION_TAG)"; \
+	fi
 
 logs: ## Follow the container logs
 	@$(PRESTASHOP_COMPOSE) logs \
