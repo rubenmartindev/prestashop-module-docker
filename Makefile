@@ -38,7 +38,7 @@ TOOLING_COMPOSE			:= $(COMPOSE) --profile=tooling
 .PHONY: \
 	help \
 	build up down down-hard logs ps shell console \
-	phpstan phpcs cs-check phpunit tests qa autoindex header-stamp \
+	shell-tooling shell-phpunit shell-tests phpstan phpcs cs-check phpunit tests qa autoindex header-stamp \
 	composer install uninstall
 
 ## —— 🌟 Makefile 🌟 ———————————————————————————————————————————————————————————
@@ -93,8 +93,7 @@ shell: ## Open a shell in the PrestaShop container
 	@$(PRESTASHOP_COMPOSE) exec \
 		--user=www-data \
 		--workdir=/var/www/html/modules/$(MODULE_NAME) \
-		prestashop bash \
-		$(ARGS)
+		prestashop bash
 
 console: ## Run the Symfony console in the PrestaShop container
 	@$(PRESTASHOP_COMPOSE) exec \
@@ -103,6 +102,18 @@ console: ## Run the Symfony console in the PrestaShop container
 		$(ARGS)
 
 ## —— 🛠 Tooling & Tests ———————————————————————————————————————————————————————
+
+shell-tooling: ## Open a shell in the Tooling container
+	@$(TOOLING_COMPOSE) run \
+		--rm tooling \
+		bash
+
+shell-phpunit: ## Open a shell in the PHPUnit container
+	@$(PHPUNIT_COMPOSE) run \
+		--rm phpunit \
+		bash
+
+shell-tests: shell-phpunit ## Alias for 'make shell-phpunit'
 
 phpstan: ## Run PHPStan in the Tooling container
 	@$(TOOLING_COMPOSE) run \
