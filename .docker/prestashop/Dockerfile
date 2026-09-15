@@ -15,6 +15,7 @@ COPY --link --from=mlocati/php-extension-installer \
 
 RUN groupmod --gid "${HOST_GID}" www-data \
     && usermod --uid "${HOST_UID}" --gid "${HOST_GID}" www-data \
+    && mkdir ${COMPOSER_HOME} && chown www-data:www-data ${COMPOSER_HOME}  \
     && chown -R www-data:www-data /tmp/data-ps/prestashop/
 
 RUN install-php-extensions @composer xdebug
