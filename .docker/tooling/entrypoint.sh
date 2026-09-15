@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-if [ ! -d "/app/tooling/vendor" ] && [ -f "/app/tooling/composer.json" ]; then
+if [ ! -f "/app/tooling/vendor/autoload.php" ] && [ -f "/app/tooling/composer.json" ]; then
     echo "\n* Installing \033[32mTooling\033[0m Composer dependencies\n"
 
     composer install \

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-if [ -f "/var/www/html/modules/$MODULE_NAME/composer.json" ]; then
+if [ ! -f "/var/www/html/modules/$MODULE_NAME/vendor/autoload.php" ] && [ -f "/var/www/html/modules/$MODULE_NAME/composer.json" ]; then
     echo "\n* Installing \033[32m$MODULE_NAME\033[0m Composer dependencies\n"
 
     runuser -u www-data -- composer install \

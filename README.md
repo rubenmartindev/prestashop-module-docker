@@ -293,9 +293,9 @@ bundled with PrestaShop:
 
 The container runs as a non-root user. Its mutable Composer project is stored
 in `tooling/`; `composer.lock` selects the installed tool versions. Dependencies
-are installed automatically in `tooling/vendor/` when that directory does not
-exist. An existing directory is not refreshed automatically after changing the
-manifest, lock file, or container PHP version.
+are installed automatically when needed. Existing dependencies are not
+refreshed automatically after changing the manifest, lock file, or container
+PHP version.
 
 ### `phpunit`
 
@@ -308,7 +308,7 @@ dependencies. It is separate from the example suite and tests under `module/`.
 Choose `PHPUNIT_PHP_VERSION` so it is compatible with both the locked runner
 and the code exercised by the module suite; changing it requires rebuilding the
 PHPUnit image. The container runs as a non-root user and installs the locked
-dependencies into `phpunit/vendor/` only when that directory does not exist.
+dependencies automatically when needed.
 
 ## Make Commands
 
