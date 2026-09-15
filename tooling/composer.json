@@ -1,5 +1,5 @@
 {
-    "name": "rubenmartindev/prestashop-docker-module",
+    "name": "rubenmartindev/prestashop-module-docker",
     "description": "Development and static analysis tooling.",
     "type": "project",
     "license": "MIT",

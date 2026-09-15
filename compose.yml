@@ -76,7 +76,7 @@ services:
     volumes:
       - ./prestashop/${PS_VERSION_TAG:-9}:/app/prestashop
       - ./module:/app/prestashop/modules/${MODULE_NAME:?}
-      - tooling_phpstan_cache:/tmp/phpstan
+      - ./tooling:/app/tooling
     profiles:
       - tooling
     networks:
@@ -99,7 +99,6 @@ services:
 
 volumes:
   db_database:
-  tooling_phpstan_cache:
 
 networks:
   prestashop:
