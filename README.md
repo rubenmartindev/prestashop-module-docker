@@ -3,52 +3,45 @@
 A Docker-based development environment for building and testing a PrestaShop
 module against multiple PrestaShop versions from the same working directory.
 
-Each PrestaShop version runs as an independent Docker Compose project and keeps
-its own installation and database. The module source is shared across all of
-them, making it easy to verify compatibility without maintaining separate
-copies of the module.
+Each version has its own PrestaShop installation and database while sharing the
+module source. This makes it possible to check compatibility without installing
+PHP, MySQL, or PrestaShop directly on the host.
 
 ## Features
 
-- Run any PrestaShop version available as an official
+- Run any version published as an official
   [`prestashop/prestashop`](https://hub.docker.com/r/prestashop/prestashop/tags)
   image tag.
-- Keep an independent PrestaShop installation and database per version.
-- Develop the module directly from the host through a bind mount.
-- Choose the MySQL version used by each environment.
-- Run PHPUnit with a configurable PHP version.
-- Run PHPStan, PHP_CodeSniffer, PHP CS Fixer, Auto Index, and Header Stamp with
-  PHP 8.5.
-- Use Composer and the PrestaShop Symfony console without installing PHP on the
-  host.
-- Debug the running shop with Xdebug.
+- Keep separate installations and databases for each PrestaShop version.
+- Work on the module directly from the host.
+- Choose the PrestaShop, MySQL, and PHPUnit PHP versions.
+- Use Composer and the PrestaShop console inside Docker.
+- Run PHPUnit, PHPStan, PHP_CodeSniffer, PHP CS Fixer, Auto Index, and Header
+  Stamp.
+- Access the database through Adminer and debug the shop with Xdebug.
 
 ## Quick Start
 
-1. Clone the repository and enter its directory:
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/rubenmartindev/prestashop-module-docker.git
    cd prestashop-module-docker
    ```
 
-2. Create the local environment file:
+2. Create your local configuration:
 
    ```bash
    cp .env.dist .env
    ```
 
-3. Put the module source in `module/`. The repository ships a complete
-   `MyModule` starter example that works with the default configuration. All
-   its contents are examples and can be replaced or adapted to the real
-   module, including its implementation, Composer metadata and autoloading,
-   namespaces, tests, PHP and PrestaShop compatibility, and quality-tool
-   configuration.
+3. Add your module source to `module/`.
 
-   The `MODULE_NAME=mymodule` value in `.env.dist` also belongs to the example.
-   `MODULE_NAME` must match the real module's PrestaShop technical name. For
-   example, a module named `foobar` should have its entry point at
-   `module/foobar.php` and use:
+   The repository includes `MyModule` as a working example. You can adapt it or
+   replace the contents of `module/` with your own module. Set `MODULE_NAME` in
+   `.env` to its PrestaShop technical name; it must match the module entry point.
+
+   For a module whose entry point is `module/foobar.php`:
 
    ```dotenv
    MODULE_NAME=foobar
@@ -60,18 +53,16 @@ copies of the module.
    make up
    ```
 
-The initial download, build, and automatic PrestaShop installation may take a
-few minutes.
+The first start downloads the required images and installs PrestaShop, so it may
+take a few minutes.
 
-With the default values, the services are available at:
+With the default configuration, open:
 
 | Service | URL |
 | --- | --- |
 | Storefront | <http://localhost/> |
 | Back office | <http://localhost/admin-dev/> |
 | Adminer | <http://localhost:8080/> |
-
-### Default Credentials
 
 The default back-office credentials are:
 
@@ -80,84 +71,41 @@ Email:    admin@example.com
 Password: prestashop
 ```
 
-For Adminer, select MySQL and use:
+For Adminer, select MySQL and use `db` as the server. The default database,
+username, and password are all `prestashop`.
 
-```text
-Server:   db
-Database: prestashop
-Username: prestashop
-Password: prestashop
+## Configuration
+
+The main settings are stored in `.env`:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MODULE_NAME` | `mymodule` | Technical name of the module |
+| `PS` | `9` | PrestaShop image tag |
+| `PS_HTTP_PORT` | `80` | Host port for the shop |
+| `PS_DOMAIN` | `localhost` | Domain configured in PrestaShop |
+| `DB_VERSION_TAG` | `5.7` | MySQL image tag |
+| `ADMINER_PORT` | `8080` | Host port for Adminer |
+| `PHPUNIT_PHP_VERSION` | `5.6` | PHP version used to run PHPUnit |
+
+Other PrestaShop and database settings can be added to `.env` when the defaults
+need to be changed. See `compose.yml` for the complete list of supported values.
+
+When changing the shop port, update both `PS_HTTP_PORT` and `PS_DOMAIN`:
+
+```dotenv
+PS_HTTP_PORT=8080
+PS_DOMAIN=localhost:8080
 ```
 
-## Project Structure
+### Multiple PrestaShop Versions
 
-```text
-.
-|-- .docker/       Dockerfiles, entrypoints, and PrestaShop helper scripts
-|-- module/        Replaceable module workspace; initial MyModule files are examples
-|-- phpunit/       Mutable Composer project for the PHPUnit runner
-|-- prestashop/    Generated PrestaShop installations, grouped by image tag
-|   |-- 1.6/
-|   |-- 8.1/
-|   `-- ...
-|-- tooling/       Mutable Composer project for development tools
-|-- .env.dist      Ready-to-use environment configuration example
-|-- compose.yml    Docker Compose services
-`-- Makefile       Main development interface
-```
+The project supports a base environment file and additional version-specific
+files. This lets you share common settings while customizing each PrestaShop
+environment.
 
-For example, `PS=1.6` stores the generated shop files in
-`prestashop/1.6/`. These files persist when the containers are stopped and are
-excluded from Git.
-
-The module owns its dependencies, tests, and tool configuration under
-`module/`. The separate `tooling/` and `phpunit/` Composer projects provide the
-development binaries used by the containers. Their manifests, lock files, and
-package versions can be changed to suit the real module; the versions included
-in this repository are not permanent project constraints.
-
-## Working with Multiple PrestaShop Versions
-
-The Docker Compose project name is generated from `MODULE_NAME` and `PS`. Dots
-in the version tag are replaced with hyphens:
-
-```text
-MODULE_NAME=foobar
-PS=8.1
-
-Project name: foobar-8-1
-```
-
-You can select a version in `.env` or pass it directly to Make:
-
-```bash
-make PS=1.6 MODULE_NAME=mymodule up
-make PS=8.1 MODULE_NAME=mymodule up
-make PS=9 MODULE_NAME=mymodule up
-```
-
-Each command uses a different project, PrestaShop directory, and database
-volume while mounting the same `module/` directory.
-
-Use the same version variables when running commands or stopping a specific
-environment:
-
-```bash
-make PS=8.1 down
-```
-
-## Environment Configuration
-
-The Makefile loads optional environment files in this order:
-
-1. `.env`
-2. `.env.<PS>`
-3. `.env.<PS>.local`
-
-Values in later files override values from earlier files. Variables passed on
-the `make` command line have the highest priority.
-
-For example, when `PS=8.1`, the following files are loaded:
+The `PS` variable selects the PrestaShop version. Set it in `.env` or pass it to
+`make`. For example, when `PS=8.1`, the files are loaded in this order:
 
 ```text
 .env
@@ -165,260 +113,135 @@ For example, when `PS=8.1`, the following files are loaded:
 .env.8.1.local
 ```
 
-This allows shared defaults in `.env`, version-specific settings in
-`.env.8.1`, and machine-local overrides in `.env.8.1.local`. Local environment
-files are ignored by Git; `.env.dist` is the committed example.
+Values in later files override values from earlier files. Values passed to
+`make` have the highest priority.
 
-### Configuration Example
-
-The base `.env` file can contain the settings shared by every PrestaShop
-version:
+For example, keep the shared settings in `.env`:
 
 ```dotenv
 MODULE_NAME=mymodule
 
 DB_VERSION_TAG=5.7
-DB_NAME=prestashop
-DB_USER=prestashop
-DB_PASSWORD=prestashop
-DB_ROOT_PASSWORD=root
 
-PS_ADMIN_MAIL=admin@example.com
-PS_ADMIN_PASSWD=prestashop
+PHPUNIT_PHP_VERSION=5.6
 ```
 
-Each version-specific file can then define its own ports and domain. For
-PrestaShop 1.6, create `.env.1.6`:
+Then create `.env.8.1` with the settings for PrestaShop 8.1:
 
 ```dotenv
-PS_HTTP_PORT=8016
-PS_DOMAIN=localhost:8016
-ADMINER_PORT=9016
+PS_HTTP_PORT=8080
+PS_DOMAIN=localhost:8080
+
+ADMINER_PORT=8888
 ```
 
-For PrestaShop 8.1, create `.env.8.1`:
-
-```dotenv
-PS_HTTP_PORT=8081
-PS_DOMAIN=localhost:8081
-ADMINER_PORT=9081
-```
-
-For PrestaShop 9, create `.env.9`:
-
-```dotenv
-PS_HTTP_PORT=8090
-PS_DOMAIN=localhost:8090
-ADMINER_PORT=9090
-```
-
-Select the configuration by passing its PrestaShop tag to Make:
+Start the configured versions with Make:
 
 ```bash
-make PS=1.6 up
-make PS=8.1 up
-make PS=9 up
+make PS=1.6 up # .env > .env.1.6 > .env.1.6.local
+make PS=8.1 up # .env > .env.8.1 > .env.8.1.local
+make PS=9 up   # .env > .env.9 > .env.9.local
 ```
 
-The three environments use the shared settings from `.env` and their own
-version-specific ports, so they can run at the same time. Local overrides can
-still be added to `.env.1.6.local`, `.env.8.1.local`, or `.env.9.local`.
+Each version keeps its own shop files and database while sharing the same
+`module/` directory. Assign different ports in the version-specific files to
+run several versions at the same time.
 
-Use the Make targets rather than calling `docker compose` directly. In addition
-to the environment-file layering, Make calculates the host UID and GID and
-selects the correct Compose profile and project name.
+Use the same `PS` value when operating or stopping a specific environment:
 
-### Variables
+```bash
+make PS=8.1 ps
+make PS=8.1 down
+```
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `MODULE_NAME` | Required | PrestaShop technical module name and project-name prefix |
-| `PS` | `9` | Official PrestaShop Docker image tag and installation directory |
-| `PS_HTTP_PORT` | `80` | Host port for PrestaShop |
-| `PS_DOMAIN` | `localhost:80` in `.env.dist` | Domain and port configured in PrestaShop |
-| `PS_FOLDER_ADMIN` | `admin-dev` | Back-office directory name |
-| `PS_ADMIN_MAIL` | `admin@example.com` | Initial administrator email |
-| `PS_ADMIN_PASSWD` | `prestashop` | Initial administrator password |
-| `PS_DEV_MODE` | `1` | Enable PrestaShop development mode |
-| `PS_INSTALL_AUTO` | `1` | Enable automatic PrestaShop installation |
-| `DB_VERSION_TAG` | `5.7` | Official MySQL Docker image tag |
-| `DB_NAME` | `prestashop` | Database name |
-| `DB_USER` | `prestashop` | Database user |
-| `DB_PASSWORD` | `prestashop` | Database user password |
-| `DB_ROOT_PASSWORD` | `root` | MySQL root password |
-| `ADMINER_PORT` | `8080` | Host port for Adminer |
-| `PHPUNIT_PHP_VERSION` | `5.6` in `.env.dist`; `8.5` fallback | PHP Docker image version used by PHPUnit |
-| `HOST_UID` | Current user ID | UID used by `www-data` in the PrestaShop image |
-| `HOST_GID` | Current group ID | GID used by `www-data` in the PrestaShop image |
-| `XDEBUG_CONFIG` | `client_host=host.docker.internal` | Runtime Xdebug configuration |
+## Commands
 
-If `PS_DOMAIN` is explicitly set, changing only `PS_HTTP_PORT` does not update
-it. Change both values together when using a non-default port.
+Run `make help` after configuring `MODULE_NAME` to list all available commands.
 
-## Services
-
-### `prestashop`
-
-Builds on the official PrestaShop image selected by `PS`. The generated
-installation is mounted from `prestashop/<PS>/`, while the local `module/`
-directory is mounted at
-`/var/www/html/modules/<MODULE_NAME>`.
-
-Composer and Xdebug are installed in this image. Xdebug uses port `9003`, modes
-`debug,develop`, and starts when triggered. By default it connects back to the
-host at `host.docker.internal`.
-
-### `db`
-
-Runs the official MySQL image selected by `DB_VERSION_TAG`. Its data is stored
-in a named Docker volume belonging to the generated Compose project. MySQL is
-available to the other containers as `db:3306`; it is not exposed directly on
-the host.
-
-### `adminer`
-
-Provides browser-based database access. It is exposed on `ADMINER_PORT`, which
-defaults to `8080`.
-
-### `tooling`
-
-Uses PHP 8.5 so development tools can run independently of the PHP version
-bundled with PrestaShop:
-
-- [PHPStan](https://github.com/phpstan/phpstan)
-- [PHP_CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer)
-- [PHP CS Fixer](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer)
-- [PrestaShop Auto Index](https://github.com/PrestaShopCorp/autoindex)
-- [PrestaShop Header Stamp](https://github.com/PrestaShopCorp/header-stamp)
-
-The container runs as a non-root user. Its mutable Composer project is stored
-in `tooling/`; `composer.lock` selects the installed tool versions. Dependencies
-are installed automatically when needed. Existing dependencies are not
-refreshed automatically after changing the manifest, lock file, or container
-PHP version.
-
-### `phpunit`
-
-Runs the PHPUnit runner in a separate PHP CLI image. This service is opt-in and
-does not run during normal PrestaShop development unless a PHPUnit, tests, QA,
-or PHPUnit-shell target is invoked.
-
-The mutable Composer project in `phpunit/` selects the PHPUnit version and its
-dependencies. It is separate from the example suite and tests under `module/`.
-Choose `PHPUNIT_PHP_VERSION` so it is compatible with both the locked runner
-and the code exercised by the module suite; changing it requires rebuilding the
-PHPUnit image. The container runs as a non-root user and installs the locked
-dependencies automatically when needed.
-
-## Make Commands
-
-Run `make help` to display the available targets. A configured `MODULE_NAME` is
-required by every target.
-
-### PrestaShop Lifecycle
+### Environment
 
 | Command | Description |
 | --- | --- |
-| `make build` | Build the PrestaShop image and pull newer base images |
-| `make up` | Create the version directory, start the services, and print their URLs |
-| `make down` | Stop and remove the environment containers |
-| `make down-hard` | Stop the environment and delete its containers, volumes, and generated PrestaShop installation |
-| `make logs` | Follow container logs |
+| `make build` | Build the PrestaShop image |
+| `make up` | Start the selected environment |
+| `make down` | Stop the environment while preserving its data |
+| `make down-hard` | Delete the environment, its database, and generated shop |
 | `make ps` | Show the environment status |
-| `make shell` | Open Bash as `www-data` in the mounted module directory |
+| `make logs` | Follow container logs |
+| `make shell` | Open a shell in the module directory |
 | `make console ARGS="..."` | Run the PrestaShop Symfony console |
 
-Examples:
-
-```bash
-make logs ARGS="prestashop"
-make shell
-make console ARGS="cache:clear"
-```
-
-### Module Development
+### Module
 
 | Command | Description |
 | --- | --- |
-| `make composer ARGS="..."` | Run Composer in the module directory |
-| `make install` | Install the module in the running PrestaShop instance |
-| `make uninstall` | Uninstall the module from the running PrestaShop instance |
+| `make composer ARGS="..."` | Run Composer for the module |
+| `make install` | Install the module in PrestaShop |
+| `make uninstall` | Uninstall the module from PrestaShop |
 
 Examples:
 
 ```bash
 make composer ARGS="install"
-make composer ARGS="require vendor/package"
-make install
-make uninstall
+make console ARGS="cache:clear"
+make logs ARGS="prestashop"
 ```
-
-If `module/composer.json` exists, its dependencies are also installed during
-the initial PrestaShop setup. The committed `module/composer.json` and
-`module/composer.lock` belong to the `MyModule` example and should be adapted or
-replaced with the real module's dependency configuration.
 
 ### Quality and Tests
 
 | Command | Description |
 | --- | --- |
-| `make phpstan` | Run PHPStan analysis |
-| `make phpcs` | Run PHP_CodeSniffer |
-| `make cs-check` | Run PHP CS Fixer in dry-run mode and show the diff |
-| `make shell-tooling` | Open Bash in the tooling container |
-| `make shell-phpunit` | Open Bash in the PHPUnit container |
-| `make shell-tests` | Alias for `make shell-phpunit` |
-| `make phpunit` | Run PHPUnit |
-| `make tests` | Alias for `make phpunit` |
-| `make qa` | Run `cs-check`, `phpcs`, `phpstan`, and `phpunit` |
-| `make autoindex` | Add PrestaShop index files, excluding `vendor` and `tests` |
-| `make header-stamp` | Apply header stamps, excluding `vendor` and `tests` |
+| `make phpunit` | Run the module test suite |
+| `make phpstan` | Run static analysis |
+| `make phpcs` | Check coding standards |
+| `make cs-check` | Check formatting with PHP CS Fixer |
+| `make qa` | Run all quality checks and tests |
+| `make autoindex` | Add the recommended PrestaShop index files |
+| `make header-stamp` | Apply source file headers |
+| `make shell-tooling` | Open a shell with the quality tools |
+| `make shell-phpunit` | Open a shell in the PHPUnit environment |
 
-Arguments can be passed to individual tools with `ARGS`:
+Pass options to an individual tool through `ARGS`:
 
 ```bash
+make phpunit ARGS="--filter MyModuleTest"
 make phpstan ARGS="--level=8"
 make phpcs ARGS="--standard=PSR12"
-make phpunit ARGS="--filter MyModuleTest"
-make shell-tooling
-make shell-phpunit
 ```
 
-The configuration files and tests initially included under `module/` are
-examples for `MyModule`. The binaries used to process them come from the
-separate `tooling/` and `phpunit/` Composer projects. Modify either layer as
-required by the real module instead of treating the starter rules, namespaces,
-compatibility ranges, or dependency versions as fixed.
+Run `make up` first when a test or tool needs access to a generated PrestaShop
+installation. The configurations included in `module/` are examples and can be
+adapted to the requirements of your module.
 
-`make autoindex` and `make header-stamp` modify files in the module directory.
-Review their changes before committing them.
+`make autoindex` and `make header-stamp` modify module files. Review their
+changes before committing them.
 
-The tooling and PHPUnit services mount the generated PrestaShop directory. Run
-`make up` first when the selected tool or test suite depends on that generated
-installation.
+## Project Structure
 
-## Persistence and Cleanup
+```text
+.docker/       Docker images and startup scripts
+module/        Module source, dependencies, configuration, and tests
+phpunit/       PHPUnit runner dependencies
+prestashop/    Generated PrestaShop installations
+tooling/       Quality tool dependencies
+compose.yml    Service configuration
+Makefile       Development commands
+```
 
-`make down` removes the containers but preserves development data:
+## Data and Cleanup
 
-- The generated shop remains in `prestashop/<PS>/`.
-- MySQL data remains in the project's `db_database` named volume.
-- The module source remains in `module/`.
-- Tooling and PHPUnit dependencies remain in `tooling/vendor/` and
-  `phpunit/vendor/`.
+`make down` stops the selected environment but preserves its generated shop,
+database, module source, and installed development dependencies.
 
-These dependency directories are not synchronized automatically after changing
-a Composer manifest, lock file, or container PHP version. Reinstall the
-affected dependencies before validating the new configuration.
+`make down-hard` performs a complete reset of the selected PrestaShop
+environment. It deletes its generated installation and database, but does not
+delete the source in `module/`.
 
-Because each project name contains the module name and PrestaShop version, the
-database volume is isolated between version environments. The module, tooling,
-and PHPUnit directories are shared bind mounts.
+Always provide the intended version when resetting a non-default environment:
 
-`make down-hard` also removes the project's named volumes and the generated
-`prestashop/<PS>/` directory, resetting that PrestaShop environment completely.
-The module source and the dependencies in `tooling/` and `phpunit/` are not
-removed.
+```bash
+make PS=8.1 down-hard
+```
 
 ## License
 
