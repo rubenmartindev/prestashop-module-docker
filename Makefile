@@ -105,13 +105,15 @@ console: ## Run the Symfony console in the PrestaShop container
 
 shell-tooling: ## Open a shell in the Tooling container
 	@$(TOOLING_COMPOSE) run \
-		--rm tooling \
-		bash
+		--rm \
+		--workdir=/app/tooling \
+		tooling bash
 
 shell-phpunit: ## Open a shell in the PHPUnit container
 	@$(PHPUNIT_COMPOSE) run \
-		--rm phpunit \
-		bash
+		--rm \
+		--workdir=/app/phpunit \
+		phpunit bash
 
 shell-tests: shell-phpunit ## Alias for 'make shell-phpunit'
 
