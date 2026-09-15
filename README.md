@@ -88,9 +88,14 @@ Password: prestashop
 
 ```text
 .
-|-- .docker/       Dockerfiles, development tools, tests, and helper scripts
+|-- .docker/       Dockerfiles, entrypoints, and PrestaShop helper scripts
 |-- module/        Module source shared by all PrestaShop environments
+|-- phpunit/       PHPUnit Composer dependencies
 |-- prestashop/    Generated PrestaShop installations, grouped by image tag
+|   |-- 1.6/
+|   |-- 8.1/
+|   `-- ...
+|-- tooling/       Development-tool Composer dependencies
 |-- .env.dist      Ready-to-use environment configuration example
 |-- compose.yml    Docker Compose services
 `-- Makefile       Main development interface
@@ -120,16 +125,8 @@ make PS=8.1 MODULE_NAME=mymodule up
 make PS=9 MODULE_NAME=mymodule up
 ```
 
-Each command uses a different project, PrestaShop directory, database volume,
-and PHPStan cache while mounting the same `module/` directory.
-
-To run multiple versions at the same time, assign unique host ports to each
-one. `PS_DOMAIN` must match the selected PrestaShop port:
-
-```bash
-make PS=8.1 PS_HTTP_PORT=8081 PS_DOMAIN=localhost:8081 ADMINER_PORT=9081 up
-make PS=9 PS_HTTP_PORT=8082 PS_DOMAIN=localhost:8082 ADMINER_PORT=9082 up
-```
+Each command uses a different project, PrestaShop directory, and database
+volume while mounting the same `module/` directory.
 
 Use the same version variables when running commands or stopping a specific
 environment:
@@ -283,10 +280,16 @@ used independently of the PHP version bundled with PrestaShop:
 - [PrestaShop Auto Index](https://github.com/PrestaShopCorp/autoindex)
 - [PrestaShop Header Stamp](https://github.com/PrestaShopCorp/header-stamp)
 
-### `tests`
+The container runs as a non-root user. Its Composer project is stored in
+`tooling/`, and dependencies are installed automatically in `tooling/vendor/`
+the first time a tooling command or shell is started.
+
+### `phpunit`
 
 Runs PHPUnit in a separate PHP CLI image. Change `TESTS_PHP_VERSION` to test
 with the PHP version required by the selected PrestaShop/module combination.
+The container runs as a non-root user and installs the locked dependencies from
+`phpunit/composer.lock` into `phpunit/vendor/` when first started.
 
 ## Make Commands
 
@@ -341,8 +344,12 @@ the initial PrestaShop setup.
 | `make phpstan` | Run PHPStan analysis |
 | `make phpcs` | Run PHP_CodeSniffer |
 | `make cs-check` | Run PHP CS Fixer in dry-run mode and show the diff |
-| `make tests` | Run PHPUnit |
-| `make qa` | Run `cs-check`, `phpcs`, `phpstan`, and `tests` |
+| `make shell-tooling` | Open Bash in the tooling container |
+| `make shell-phpunit` | Open Bash in the PHPUnit container |
+| `make shell-tests` | Alias for `make shell-phpunit` |
+| `make phpunit` | Run PHPUnit |
+| `make tests` | Alias for `make phpunit` |
+| `make qa` | Run `cs-check`, `phpcs`, `phpstan`, and `phpunit` |
 | `make autoindex` | Add PrestaShop index files, excluding `vendor` and `tests` |
 | `make header-stamp` | Apply header stamps, excluding `vendor` and `tests` |
 
@@ -351,13 +358,15 @@ Arguments can be passed to individual tools with `ARGS`:
 ```bash
 make phpstan ARGS="--level=8"
 make phpcs ARGS="--standard=PSR12"
-make tests ARGS="--filter MyModuleTest"
+make phpunit ARGS="--filter MyModuleTest"
+make shell-tooling
+make shell-phpunit
 ```
 
 `make autoindex` and `make header-stamp` modify files in the module directory.
 Review their changes before committing them.
 
-The tooling and test services mount the generated PrestaShop directory. Run
+The tooling and PHPUnit services mount the generated PrestaShop directory. Run
 `make up` at least once for the selected version before using them.
 
 ## Persistence and Cleanup
@@ -366,16 +375,18 @@ The tooling and test services mount the generated PrestaShop directory. Run
 
 - The generated shop remains in `prestashop/<PS>/`.
 - MySQL data remains in the project's `db_database` named volume.
-- PHPStan's cache remains in the project's `tooling_phpstan_cache` named
-  volume.
 - The module source remains in `module/`.
+- Tooling and PHPUnit dependencies remain in `tooling/vendor/` and
+  `phpunit/vendor/`.
 
-Because each project name contains the module name and PrestaShop version,
-these volumes are isolated between version environments.
+Because each project name contains the module name and PrestaShop version, the
+database volume is isolated between version environments. The module, tooling,
+and PHPUnit directories are shared bind mounts.
 
 `make down-hard` also removes the project's named volumes and the generated
 `prestashop/<PS>/` directory, resetting that PrestaShop environment completely.
-The module source in `module/` is not removed.
+The module source and the dependencies in `tooling/` and `phpunit/` are not
+removed.
 
 ## License
 
