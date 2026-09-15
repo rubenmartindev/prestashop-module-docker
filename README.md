@@ -38,11 +38,16 @@ copies of the module.
    cp .env.dist .env
    ```
 
-3. Put the module source in `module/`. The repository includes a minimal
-   `mymodule` example that works with the default configuration.
+3. Put the module source in `module/`. The repository ships a complete
+   `MyModule` starter example that works with the default configuration. All
+   its contents are examples and can be replaced or adapted to the real
+   module, including its implementation, Composer metadata and autoloading,
+   namespaces, tests, PHP and PrestaShop compatibility, and quality-tool
+   configuration.
 
-   `MODULE_NAME` must match the module's PrestaShop technical name. For example,
-   a module named `foobar` should have its entry point at
+   The `MODULE_NAME=mymodule` value in `.env.dist` also belongs to the example.
+   `MODULE_NAME` must match the real module's PrestaShop technical name. For
+   example, a module named `foobar` should have its entry point at
    `module/foobar.php` and use:
 
    ```dotenv
@@ -89,13 +94,13 @@ Password: prestashop
 ```text
 .
 |-- .docker/       Dockerfiles, entrypoints, and PrestaShop helper scripts
-|-- module/        Module source shared by all PrestaShop environments
-|-- phpunit/       PHPUnit Composer dependencies
+|-- module/        Replaceable module workspace; initial MyModule files are examples
+|-- phpunit/       Mutable Composer project for the PHPUnit runner
 |-- prestashop/    Generated PrestaShop installations, grouped by image tag
 |   |-- 1.6/
 |   |-- 8.1/
 |   `-- ...
-|-- tooling/       Development-tool Composer dependencies
+|-- tooling/       Mutable Composer project for development tools
 |-- .env.dist      Ready-to-use environment configuration example
 |-- compose.yml    Docker Compose services
 `-- Makefile       Main development interface
@@ -104,6 +109,12 @@ Password: prestashop
 For example, `PS=1.6` stores the generated shop files in
 `prestashop/1.6/`. These files persist when the containers are stopped and are
 excluded from Git.
+
+The module owns its dependencies, tests, and tool configuration under
+`module/`. The separate `tooling/` and `phpunit/` Composer projects provide the
+development binaries used by the containers. Their manifests, lock files, and
+package versions can be changed to suit the real module; the versions included
+in this repository are not permanent project constraints.
 
 ## Working with Multiple PrestaShop Versions
 
@@ -236,7 +247,7 @@ selects the correct Compose profile and project name.
 | `DB_PASSWORD` | `prestashop` | Database user password |
 | `DB_ROOT_PASSWORD` | `root` | MySQL root password |
 | `ADMINER_PORT` | `8080` | Host port for Adminer |
-| `PHPUNIT_PHP_VERSION` | `8.5` | PHP Docker image version used by PHPUnit |
+| `PHPUNIT_PHP_VERSION` | `5.6` in `.env.dist`; `8.5` fallback | PHP Docker image version used by PHPUnit |
 | `HOST_UID` | Current user ID | UID used by `www-data` in the PrestaShop image |
 | `HOST_GID` | Current group ID | GID used by `www-data` in the PrestaShop image |
 | `XDEBUG_CONFIG` | `client_host=host.docker.internal` | Runtime Xdebug configuration |
@@ -271,8 +282,8 @@ defaults to `8080`.
 
 ### `tooling`
 
-Uses PHP 8.5 so the latest compatible releases of the development tools can be
-used independently of the PHP version bundled with PrestaShop:
+Uses PHP 8.5 so development tools can run independently of the PHP version
+bundled with PrestaShop:
 
 - [PHPStan](https://github.com/phpstan/phpstan)
 - [PHP_CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer)
@@ -280,16 +291,24 @@ used independently of the PHP version bundled with PrestaShop:
 - [PrestaShop Auto Index](https://github.com/PrestaShopCorp/autoindex)
 - [PrestaShop Header Stamp](https://github.com/PrestaShopCorp/header-stamp)
 
-The container runs as a non-root user. Its Composer project is stored in
-`tooling/`, and dependencies are installed automatically in `tooling/vendor/`
-the first time a tooling command or shell is started.
+The container runs as a non-root user. Its mutable Composer project is stored
+in `tooling/`; `composer.lock` selects the installed tool versions. Dependencies
+are installed automatically in `tooling/vendor/` when that directory does not
+exist. An existing directory is not refreshed automatically after changing the
+manifest, lock file, or container PHP version.
 
 ### `phpunit`
 
-Runs PHPUnit in a separate PHP CLI image. Change `PHPUNIT_PHP_VERSION` to test
-with the PHP version required by the selected PrestaShop/module combination.
-The container runs as a non-root user and installs the locked dependencies from
-`phpunit/composer.lock` into `phpunit/vendor/` when first started.
+Runs the PHPUnit runner in a separate PHP CLI image. This service is opt-in and
+does not run during normal PrestaShop development unless a PHPUnit, tests, QA,
+or PHPUnit-shell target is invoked.
+
+The mutable Composer project in `phpunit/` selects the PHPUnit version and its
+dependencies. It is separate from the example suite and tests under `module/`.
+Choose `PHPUNIT_PHP_VERSION` so it is compatible with both the locked runner
+and the code exercised by the module suite; changing it requires rebuilding the
+PHPUnit image. The container runs as a non-root user and installs the locked
+dependencies into `phpunit/vendor/` only when that directory does not exist.
 
 ## Make Commands
 
@@ -335,7 +354,9 @@ make uninstall
 ```
 
 If `module/composer.json` exists, its dependencies are also installed during
-the initial PrestaShop setup.
+the initial PrestaShop setup. The committed `module/composer.json` and
+`module/composer.lock` belong to the `MyModule` example and should be adapted or
+replaced with the real module's dependency configuration.
 
 ### Quality and Tests
 
@@ -363,11 +384,18 @@ make shell-tooling
 make shell-phpunit
 ```
 
+The configuration files and tests initially included under `module/` are
+examples for `MyModule`. The binaries used to process them come from the
+separate `tooling/` and `phpunit/` Composer projects. Modify either layer as
+required by the real module instead of treating the starter rules, namespaces,
+compatibility ranges, or dependency versions as fixed.
+
 `make autoindex` and `make header-stamp` modify files in the module directory.
 Review their changes before committing them.
 
 The tooling and PHPUnit services mount the generated PrestaShop directory. Run
-`make up` at least once for the selected version before using them.
+`make up` first when the selected tool or test suite depends on that generated
+installation.
 
 ## Persistence and Cleanup
 
@@ -378,6 +406,10 @@ The tooling and PHPUnit services mount the generated PrestaShop directory. Run
 - The module source remains in `module/`.
 - Tooling and PHPUnit dependencies remain in `tooling/vendor/` and
   `phpunit/vendor/`.
+
+These dependency directories are not synchronized automatically after changing
+a Composer manifest, lock file, or container PHP version. Reinstall the
+affected dependencies before validating the new configuration.
 
 Because each project name contains the module name and PrestaShop version, the
 database volume is isolated between version environments. The module, tooling,
