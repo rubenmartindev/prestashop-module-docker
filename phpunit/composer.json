@@ -1,5 +1,5 @@
 {
-    "name": "rubenmartindev/prestashop-docker-module",
+    "name": "rubenmartindev/prestashop-module-docker",
     "description": "Testing tooling.",
     "type": "project",
     "license": "MIT",
@@ -10,7 +10,7 @@
         }
     ],
     "require-dev": {
-        "phpunit/phpunit": "*"
+        "phpunit/phpunit": "^13.3"
     },
     "config": {
         "preferred-install": "dist",

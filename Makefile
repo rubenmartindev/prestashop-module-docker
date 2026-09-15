@@ -30,15 +30,15 @@ ARGS 					?=
 
 COMPOSE_PROJECT_NAME	:= $(MODULE_NAME)-$(subst .,-,$(PS_VERSION_TAG))
 COMPOSE 				:= docker compose --project-name $(COMPOSE_PROJECT_NAME)
+PHPUNIT_COMPOSE			:= $(COMPOSE) --profile=phpunit
 PRESTASHOP_COMPOSE		:= $(COMPOSE) --profile=prestashop
-TESTS_COMPOSE			:= $(COMPOSE) --profile=tests
 TOOLING_COMPOSE			:= $(COMPOSE) --profile=tooling
 
 .DEFAULT_GOAL 			:= help
 .PHONY: \
 	help \
 	build up down down-hard logs ps shell console \
-	phpstan phpcs cs-check tests qa autoindex header-stamp \
+	phpstan phpcs cs-check phpunit tests qa autoindex header-stamp \
 	composer install uninstall
 
 ## —— 🌟 Makefile 🌟 ———————————————————————————————————————————————————————————
@@ -125,14 +125,16 @@ cs-check: ## Run PHP CS Fixer in the Tooling container in dry-run mode
 		--diff \
 		$(ARGS)
 
-tests: ## Run PHPUnit in the Tests container
-	@$(TESTS_COMPOSE) run \
-		--rm tests \
-		/app/tests/vendor/bin/phpunit \
+phpunit: ## Run PHPUnit in the PHPUnit container
+	@$(PHPUNIT_COMPOSE) run \
+		--rm phpunit \
+		/app/phpunit/vendor/bin/phpunit \
 		$(ARGS)
 
+tests: phpunit ## Alias for 'make phpunit'
+
 qa: override ARGS :=
-qa: cs-check phpcs phpstan tests ## Run all quality checks
+qa: cs-check phpcs phpstan phpunit ## Run all quality checks
 
 autoindex: ## Run Auto Index in the Tooling container
 	@$(TOOLING_COMPOSE) run \
