@@ -1,0 +1,14 @@
+includes:
+    - /app/tooling/vendor/prestashop/php-dev-tools/phpstan/ps-module-extension.neon
+
+parameters:
+    level: max
+
+    paths:
+        - ./
+
+    excludePaths:
+        - ./vendor
+        - ./tests
+
+    tmpDir: /app/tooling/.phpstan

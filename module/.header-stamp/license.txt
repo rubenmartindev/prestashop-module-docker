@@ -1,0 +1,7 @@
+/**
+ * @author rubenmartin.dev <hola@rubenmartin.dev>
+ *
+ * @copyright Since 2026 rubenmartin.dev
+ *
+ * @license https://opensource.org/license/MIT MIT
+ */

@@ -6,6 +6,7 @@
  *
  * @license https://opensource.org/license/MIT MIT
  */
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -18,7 +19,7 @@ class MyModule extends Module
         $this->bootstrap                = true;
         $this->name                     = 'mymodule';
         $this->need_instance            = 0;
-        $this->ps_versions_compliancy   = ['min' => '1.6', 'max' => '9.999'];
+        $this->ps_versions_compliancy   = ['min' => '1.6.0.4', 'max' => '9.999.999'];
         $this->tab                      = 'others';
         $this->version                  = '0.0.0';
 

@@ -1,0 +1,26 @@
+{
+    "name": "rubenmartindev/mymodule",
+    "type": "prestashop-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rubén Martín",
+            "email": "hola@rubenmartin.dev"
+        }
+    ],
+    "require": {
+        "php": ">=5.6"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RubenMartinDev\\MyModule\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "5.6"
+        },
+        "prepend-autoloader": false,
+        "sort-packages": true
+    }
+}
