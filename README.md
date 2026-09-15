@@ -236,7 +236,7 @@ selects the correct Compose profile and project name.
 | `DB_PASSWORD` | `prestashop` | Database user password |
 | `DB_ROOT_PASSWORD` | `root` | MySQL root password |
 | `ADMINER_PORT` | `8080` | Host port for Adminer |
-| `TESTS_PHP_VERSION` | `8.5` | PHP Docker image version used by PHPUnit |
+| `PHPUNIT_PHP_VERSION` | `8.5` | PHP Docker image version used by PHPUnit |
 | `HOST_UID` | Current user ID | UID used by `www-data` in the PrestaShop image |
 | `HOST_GID` | Current group ID | GID used by `www-data` in the PrestaShop image |
 | `XDEBUG_CONFIG` | `client_host=host.docker.internal` | Runtime Xdebug configuration |
@@ -286,7 +286,7 @@ the first time a tooling command or shell is started.
 
 ### `phpunit`
 
-Runs PHPUnit in a separate PHP CLI image. Change `TESTS_PHP_VERSION` to test
+Runs PHPUnit in a separate PHP CLI image. Change `PHPUNIT_PHP_VERSION` to test
 with the PHP version required by the selected PrestaShop/module combination.
 The container runs as a non-root user and installs the locked dependencies from
 `phpunit/composer.lock` into `phpunit/vendor/` when first started.

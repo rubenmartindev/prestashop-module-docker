@@ -24,7 +24,7 @@ HOST_GID 				?= $(shell id -g)
 
 PS_HTTP_PORT 			?= 80
 
-TESTS_PHP_VERSION		?= 8.5
+PHPUNIT_PHP_VERSION		?= 8.5
 
 ARGS 					?=
 

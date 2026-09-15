@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-ARG TESTS_PHP_VERSION=8.5
+ARG PHPUNIT_PHP_VERSION=8.5
 
-FROM php:${TESTS_PHP_VERSION}-cli
+FROM php:${PHPUNIT_PHP_VERSION}-cli
 
 RUN useradd -m -s /bin/bash nonroot
 

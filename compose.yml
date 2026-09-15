@@ -87,7 +87,7 @@ services:
       context: .docker/phpunit
       args:
         MODULE_NAME: ${MODULE_NAME:?}
-        TESTS_PHP_VERSION: ${TESTS_PHP_VERSION:-8.5}
+        PHPUNIT_PHP_VERSION: ${PHPUNIT_PHP_VERSION:-8.5}
     volumes:
       - ./prestashop/${PS_VERSION_TAG:-9}:/app/prestashop
       - ./module:/app/prestashop/modules/${MODULE_NAME:?}
