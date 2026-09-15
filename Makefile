@@ -22,6 +22,7 @@ endif
 HOST_UID 				?= $(shell id -u)
 HOST_GID 				?= $(shell id -g)
 
+PS_FOLDER_ADMIN			?= admin-dev
 PS_HTTP_PORT 			?= 80
 
 PHPUNIT_PHP_VERSION		?= 8.5
